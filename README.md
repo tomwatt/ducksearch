@@ -1,4 +1,4 @@
-# DuckDuckGo service
+# DuckDuckGo Service
 
 A proxy service for retrieving the top titles for search terms from DuckDuckGo
 

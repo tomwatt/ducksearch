@@ -1,4 +1,4 @@
-# Drone Tracker
+# DuckDuckGo service
 
 A proxy service for retrieving the top titles for search terms from DuckDuckGo
 

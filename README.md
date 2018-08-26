@@ -19,6 +19,7 @@ docker-compose exec ducksearch sh
 From here you can open up a python interpreter and play around. For the results to assignment one:
 
 import ducksearch
+
 ducksearch.search_word_list()
 
 

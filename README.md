@@ -11,6 +11,16 @@ docker-compose up --build
 
 Navigate to http://127.0.0.1:5000/search/duckduckgo/{search term}, or wherever you have it hosted, to view the search results.
 
+To see the results to assignment one, set the application running with the command above,
+then open a terminal in the container with the following command:
+
+docker-compose exec ducksearch sh
+
+From here you can open up a python interpreter and play around. For the results to assignment one:
+
+import ducksearch
+ducksearch.search_word_list()
+
 
 ### Prerequisites
 

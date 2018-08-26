@@ -72,7 +72,7 @@ def get_titles_json(word_list):
 
     """
     result = {}
-    print("word_list size: " + str(len(word_list)))
+
     for word in word_list:
         try:
             titles = get_top_three_titles(word)

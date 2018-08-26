@@ -88,7 +88,7 @@ def get_titles_json(word_list):
             continue
 
         result[word] = titles
-    print("Result size:" + str(len(result)))
+
     return json.dumps(result)
 
 
@@ -109,6 +109,7 @@ def get_top_three_titles(search_term):
     titles = redis_client.lrange(search_term, 0, -1)
     if not titles:
         raw_response = get_raw_response(search_term)
+
         if raw_response.status_code == 200:
             titles = parse_titles(raw_response.text)
             if titles:
@@ -134,7 +135,6 @@ def parse_titles(raw_response):
     titles = []
     doc = document_fromstring(raw_response)
     results_div = doc.get_element_by_id(RESULT_DIV_ID)
-
 
     for element in results_div.find_class(RESULT_CLASS):
         title = element.find_class(TITLE_CLASS)[0].text_content()

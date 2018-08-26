@@ -41,6 +41,10 @@ def filter_list(word_list, list_size):
 
     """
     result = set()
+
+    if list_size > len(word_list):
+        list_size = len(word_list)
+
     while len(result) < list_size:
         word = random.choice(word_list)
         if word[0].islower() and word.isalpha() and word not in result:

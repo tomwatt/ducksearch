@@ -1,5 +1,6 @@
 """Allows searching of particular terms on DuckDuckGo."""
 import json
+import time
 import requests
 from lxml.html import document_fromstring
 import redis
@@ -16,6 +17,11 @@ redis_client = redis.Redis(
     host=REDIS_HOST,
     port=REDIS_PORT,
     decode_responses=True)
+
+class DuckDuckGoError(Exception):
+    """Raised when DuckDuckGo request limit is reached."""
+
+    pass
 
 def search_word_list():
     """
@@ -36,6 +42,20 @@ def search_word_list():
     return get_titles_json(word_list)
 
 
+def get_top_three_titles_json(search_term):
+    """
+    Return a json array of the top three titles from duckduckgo.
+
+    Args:
+        search_term: the term to be searched on duckduckgo
+
+    Returns:
+        A json array containing the top three titles from duckduckgo.
+
+    """
+    return json.dumps(get_top_three_titles(search_term))
+
+
 def get_titles_json(word_list):
     """
     Return the top 3 search titles for each of the provided terms.
@@ -52,10 +72,23 @@ def get_titles_json(word_list):
 
     """
     result = {}
+    print("word_list size: " + str(len(word_list)))
     for word in word_list:
-        titles = get_top_three_titles(word)
-        result[word] = titles
+        try:
+            titles = get_top_three_titles(word)
 
+        except DuckDuckGoError:
+            print("""
+            DuckDuckGo request limit reached.
+            Pausing for fifty seconds.
+            Number of results so far: {0}""".format(len(result)))
+            # Very unhappy about this, but DuckDuckGo has a timed request limit!
+            time.sleep(50)
+            word_list.append(word)
+            continue
+
+        result[word] = titles
+    print("Result size:" + str(len(result)))
     return json.dumps(result)
 
 
@@ -76,9 +109,13 @@ def get_top_three_titles(search_term):
     titles = redis_client.lrange(search_term, 0, -1)
     if not titles:
         raw_response = get_raw_response(search_term)
-        titles = parse_titles(raw_response)
-        if titles:
-            redis_client.lpush(search_term, *titles)
+        if raw_response.status_code == 200:
+            titles = parse_titles(raw_response.text)
+            if titles:
+                redis_client.lpush(search_term, *titles)
+
+        else:
+            raise DuckDuckGoError("Request limit reached")
 
     return titles
 
@@ -97,6 +134,8 @@ def parse_titles(raw_response):
     titles = []
     doc = document_fromstring(raw_response)
     results_div = doc.get_element_by_id(RESULT_DIV_ID)
+
+
     for element in results_div.find_class(RESULT_CLASS):
         title = element.find_class(TITLE_CLASS)[0].text_content()
         titles.append(title)
@@ -118,6 +157,6 @@ def get_raw_response(search_term):
 
     """
     qs_dict = {
-        "q": search_term
+        "q": search_term,
     }
-    return requests.get(SEARCH_URL, params=qs_dict).text
+    return requests.get(SEARCH_URL, params=qs_dict)
